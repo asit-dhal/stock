@@ -1,4 +1,0 @@
-stock
-=====
-
-stock market data

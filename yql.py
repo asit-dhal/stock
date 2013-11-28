@@ -1,6 +1,7 @@
 import urllib2
 import httplib
 import types
+import json
 
 from utility import *
 
@@ -8,7 +9,8 @@ from utility import *
 BASE_URL = "http://query.yahooapis.com/v1/public/yql"
 APPEND_URL = "&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env"
 QUERY = "select %s from yahoo.finance.quotes where symbol in "
-RESPONSE_FORMAT = "xml"
+RESPONSE_FORMAT = "json"
+
 
 class Yql(object):
 
@@ -23,7 +25,7 @@ class Yql(object):
         self.encoded_url = ''
         self.res_data = ''
 
-    def _make_url(self):
+    def _build_url(self):
         
         #only specific fields are required
         if isinstance(self.fields, types.ListType):
@@ -61,16 +63,57 @@ class Yql(object):
         #print "**************************************"
         #print self.encoded_url
 
+    def _parse_response(self, response):
+        #print type(response)
+        json_data=json.loads(response)
+        count = json_data['query']['count']
+        #print 'count : ', count
+        data = json_data['query']['results']['quote']
+        return { 'count' : count, 'data' : data}
+
+
     def query_yql(self):
-        self._make_url()
+        self._build_url()
         res = UrlFetch(self.encoded_url)
         self.res_data = res.Get()
-        #print self.res_data        
-        self.res_quotes = {}
-        root = ElementTree.XML(self.res_data)
-        xmldict = XmlDictConfig(root)
+        print self._parse_response(self.res_data)
+        #self.res_quotes = {}
+        #root = ElementTree.XML(self.res_data)
+        #xmldict = XmlDictConfig(root)
  
-        for quote in xmldict["results"]["quote"]:
-            self.res_quotes[quote['Symbol']] = quote
-        return self.res_quotes
+        #for quote in xmldict["results"]["quote"]:
+        #    self.res_quotes[quote['Symbol']] = quote
+        #return self.res_quotes
 
+if __name__ == '__main__':
+
+    lis = []
+    fields = []
+    fields.append('Symbol')
+    fields.append('Name')
+    fields.append('StockExchange')
+    fields.append('Ask')
+    fields.append('Bid')
+    fields.append('Change')
+    fields.append('ChangeinPercent')
+    fields.append('Open')
+    fields.append('TradeDate')
+    fields.append('PreviousClose')
+    fields.append('PercentChange')
+    fields.append('LastTradeDate')
+    fields.append('LastTradeTime')
+    fields.append('LastTradePriceOnly')
+    fields.append('DaysRange')
+    fields.append('DaysHigh')
+    fields.append('DaysLow')
+    fields.append('YearLow')
+    fields.append('YearHigh')
+    fields.append('PercebtChangeFromYearHigh')
+    fields.append('PercentChangeFromYearLow')
+    fields.append('ChangeFromYearHigh')
+    fields.append('ChangeFromYearLow')
+    lis.append("GOOG")
+    lis.append("MFST")
+    yql_ob = Yql(lis, fields)
+    print type(yql_ob)
+    yql_ob.query_yql()
